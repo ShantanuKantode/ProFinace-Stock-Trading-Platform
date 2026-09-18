@@ -1,69 +1,80 @@
-import React from "react";
+import React , {useState,useEffect} from "react";
+import axios from "axios";
+
+// import {holdings} from '../data/data';
 
 const Holdings = () => {
+
+  const [allHoldings ,setAllHoldings] = useState([]);
+
+  useEffect(()=>{
+    axios.get("http://localhost:3002/allHoldings").then((res)=>{
+      console.log(res.data);
+      setAllHoldings(res.data);
+    })
+},[]);
+
   return (
     <>
-      <h3 className="title">Holdings</h3>
+      <h3 className="title">Holdings ({allHoldings.length})</h3>
 
       <div className="order-table">
         <table>
-          <thead>
-            <tr>
-              <th>Instrument</th>
-              <th>Qty.</th>
-              <th>Avg. cost</th>
-              <th>LTP</th>
-              <th>Cur. val</th>
-              <th>P&L</th>
-              <th>Net chg.</th>
-              <th>Day chg.</th>
-            </tr>
-          </thead>
+          <tr>
+            <th>Instrument</th>
+            <th>Qty.</th>
+            <th>Avg. cost</th>
+            <th>LTP</th>
+            <th>Cur. val</th>
+            <th>P&L</th>
+            <th>Net chg.</th>
+            <th>Day chg.</th>
+          </tr>
 
-          <tbody>
-            <tr>
-              <td>RELIANCE</td>
-              <td>10</td>
-              <td>2,500.00</td>
-              <td>2,700.00</td>
-              <td>27,000.00</td>
-              <td className="profit">+2,000.00</td>
-              <td className="profit">+8.00%</td>
-              <td className="profit">+2.50%</td>
-            </tr>
+          {allHoldings.map((stock, index) => {
+            const curValue = stock.price * stock.qty;
+            const isProfit = curValue - stock.avg * stock.qty >= 0.0;
+            const profClass = isProfit ? "profit" : "loss";
+            const dayClass = stock.isLoss ? "loss" : "profit";
 
-            <tr>
-              <td>TCS</td>
-              <td>5</td>
-              <td>3,200.00</td>
-              <td>3,100.00</td>
-              <td>15,500.00</td>
-              <td className="loss">-500.00</td>
-              <td className="loss">-3.12%</td>
-              <td className="loss">-1.20%</td>
-            </tr>
-          </tbody>
+            return (
+              <tr key={index}>
+                <td>{stock.name}</td>
+                <td>{stock.qty}</td>
+                <td>{stock.avg.toFixed(2)}</td>
+                <td>{stock.price.toFixed(2)}</td>
+                <td>{curValue.toFixed(2)}</td>
+                <td className={profClass}>
+                  {(curValue - stock.avg * stock.qty).toFixed(2)}
+                </td>
+                <td className={profClass}>{stock.net}</td>
+                <td className={dayClass}>{stock.day}</td>
+              </tr>
+            );
+          })}
         </table>
       </div>
 
       <div className="row">
         <div className="col">
-          <h5>29,875.55</h5>
+          <h5>
+            29,875.<span>55</span>{" "}
+          </h5>
           <p>Total investment</p>
         </div>
-
         <div className="col">
-          <h5>31,428.95</h5>
+          <h5>
+            31,428.<span>95</span>{" "}
+          </h5>
           <p>Current value</p>
         </div>
-
         <div className="col">
-          <h5 className="profit">
-            1,553.40 (+5.20%)
-          </h5>
-          <p>P&amp;L</p>
+          <h5>1,553.40 (+5.20%)</h5>
+          <p>P&L</p>
         </div>
       </div>
+      {/* <VerticalGraph data={data} /> */}
+    
     </>
   );
 };
