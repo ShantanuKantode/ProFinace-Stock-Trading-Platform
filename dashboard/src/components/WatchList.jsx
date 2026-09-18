@@ -14,6 +14,7 @@ import { watchlist } from "../data/data";
 import GeneralContext from "./GeneralContext";
 
 const WatchList = () => {
+
   const [search, setSearch] = useState("");
 
   const filteredStocks = watchlist.filter((stock) =>
@@ -22,7 +23,9 @@ const WatchList = () => {
 
   return (
     <div className="watchlist-container">
+
       <div className="search-container">
+
         <Search className="search-icon" />
 
         <input
@@ -38,37 +41,64 @@ const WatchList = () => {
         <span className="counts">
           {filteredStocks.length} / 50
         </span>
+
       </div>
 
       <ul className="list">
-        {filteredStocks.map((stock, index) => (
-          <WatchListItem
-            stock={stock}
-            key={index}
-          />
-        ))}
+
+        {filteredStocks.length > 0 ? (
+
+          filteredStocks.map((stock, index) => (
+            <WatchListItem
+              stock={stock}
+              key={index}
+            />
+          ))
+
+        ) : (
+
+          <li className="no-results">
+            No stocks found
+          </li>
+
+        )}
+
       </ul>
+
     </div>
   );
 };
 
 export default WatchList;
 
+
+// -----------------------------
+// WatchList Item
+// -----------------------------
+
 const WatchListItem = ({ stock }) => {
+
   const [showWatchlistActions, setShowWatchlistActions] =
     useState(false);
 
   return (
     <li
-      onMouseEnter={() => setShowWatchlistActions(true)}
-      onMouseLeave={() => setShowWatchlistActions(false)}
+      onMouseEnter={() =>
+        setShowWatchlistActions(true)
+      }
+      onMouseLeave={() =>
+        setShowWatchlistActions(false)
+      }
     >
+
       <div className="item">
+
         <p className={stock.isDown ? "down" : "up"}>
           {stock.name}
         </p>
 
         <div className="itemInfo">
+
           <span className="percent">
             {stock.percent}
           </span>
@@ -82,38 +112,59 @@ const WatchListItem = ({ stock }) => {
           <span className="price">
             {stock.price}
           </span>
+
         </div>
+
       </div>
 
       {showWatchlistActions && (
-        <WatchListActions uid={stock.name} />
+        <WatchListActions
+          uid={stock.name}
+        />
       )}
+
     </li>
   );
 };
 
+
+// -----------------------------
+// WatchList Actions
+// -----------------------------
+
 const WatchListActions = ({ uid }) => {
-  const { openBuyWindow } = useContext(GeneralContext);
+
+  const {
+    openBuyWindow,
+    openSellWindow,
+  } = useContext(GeneralContext);
+
 
   const handleBuy = () => {
     openBuyWindow(uid);
   };
 
+
   const handleSell = () => {
-    console.log("Sell:", uid);
+    openSellWindow(uid);
   };
+
 
   const handleAnalytics = () => {
     console.log("Analytics:", uid);
   };
 
+
   const handleMore = () => {
     console.log("More:", uid);
   };
 
+
   return (
     <span className="actions">
+
       <span>
+
         <Tooltip
           title="Buy (B)"
           placement="top"
@@ -126,6 +177,7 @@ const WatchListActions = ({ uid }) => {
             Buy
           </button>
         </Tooltip>
+
 
         <Tooltip
           title="Sell (S)"
@@ -140,6 +192,7 @@ const WatchListActions = ({ uid }) => {
           </button>
         </Tooltip>
 
+
         <Tooltip
           title="Analytics (A)"
           placement="top"
@@ -153,6 +206,7 @@ const WatchListActions = ({ uid }) => {
           </button>
         </Tooltip>
 
+
         <Tooltip
           title="More"
           placement="top"
@@ -165,7 +219,9 @@ const WatchListActions = ({ uid }) => {
             <MoreHoriz className="icon" />
           </button>
         </Tooltip>
+
       </span>
+
     </span>
   );
 };
