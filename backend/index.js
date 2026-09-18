@@ -203,17 +203,88 @@ app.get('/allPositions',async(req,res)=>{
 
 
 app.post("/newOrder", async (req, res) => {
-  let newOrder = new OrdersModel({
-    name: req.body.name,
-    qty: req.body.qty,
-    price: req.body.price,
-    mode: req.body.mode,
-  });
+  try {
+    const { name, qty, price, mode } = req.body;
 
-  newOrder.save();
+    // Save order
+    const newOrder = new OrdersModel({
+      name: name,
+      qty: qty,
+      price: price,
+      mode: mode,
+    });
 
-  res.send("Order saved!");
+    await newOrder.save();
+
+    // BUY
+    if (mode === "BUY") {
+      const existingHolding = await HoldingsModel.findOne({
+        name: name,
+      });
+
+      if (existingHolding) {
+        const totalQty = existingHolding.qty + Number(qty);
+
+        const totalInvestment =
+          existingHolding.avg * existingHolding.qty +
+          Number(price) * Number(qty);
+
+        existingHolding.qty = totalQty;
+        existingHolding.avg = totalInvestment / totalQty;
+        existingHolding.price = Number(price);
+
+        await existingHolding.save();
+      } else {
+        const newHolding = new HoldingsModel({
+          name: name,
+          qty: Number(qty),
+          avg: Number(price),
+          price: Number(price),
+          net: "0.00%",
+          day: "0.00%",
+          isLoss: false,
+        });
+
+        await newHolding.save();
+      }
+    }
+
+    // SELL
+    if (mode === "SELL") {
+      const existingHolding = await HoldingsModel.findOne({
+        name: name,
+      });
+
+      if (!existingHolding) {
+        return res.status(400).send("You don't own this stock!");
+      }
+
+      if (existingHolding.qty < Number(qty)) {
+        return res.status(400).send("Insufficient stock quantity!");
+      }
+
+      existingHolding.qty =
+        existingHolding.qty - Number(qty);
+
+      existingHolding.price = Number(price);
+
+      if (existingHolding.qty === 0) {
+        await HoldingsModel.deleteOne({
+          _id: existingHolding._id,
+        });
+      } else {
+        await existingHolding.save();
+      }
+    }
+
+    res.send("Order saved successfully!");
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error saving order!");
+  }
 });
+
 
 
 
