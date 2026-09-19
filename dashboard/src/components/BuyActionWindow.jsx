@@ -1,4 +1,8 @@
-import React, { useState } from "react";
+import React, {
+  useContext,
+  useState,
+} from "react";
+
 import { Link } from "react-router-dom";
 
 import axios from "axios";
@@ -7,66 +11,182 @@ import GeneralContext from "./GeneralContext";
 
 import "./BuyActionWindow.css";
 
-const BuyActionWindow = ({ uid }) => {
-  const [stockQuantity, setStockQuantity] = useState(1);
-  const [stockPrice, setStockPrice] = useState(0.0);
 
-  const handleBuyClick = () => {
-    axios.post("http://localhost:3002/newOrder", {
-      name: uid,
-      qty: stockQuantity,
-      price: stockPrice,
-      mode: "BUY",
-    });
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3002";
 
-    GeneralContext.closeBuyWindow();
-  };
 
-  const handleCancelClick = () => {
-    GeneralContext.closeBuyWindow();
-  };
+const BuyActionWindow = ({
+  uid,
+}) => {
+
+  const [
+    stockQuantity,
+    setStockQuantity,
+  ] = useState(1);
+
+
+  const [
+    stockPrice,
+    setStockPrice,
+  ] = useState(0);
+
+
+  const {
+    closeBuyWindow,
+  } = useContext(
+    GeneralContext
+  );
+
+
+  const handleBuyClick =
+    async () => {
+
+      try {
+
+        await axios.post(
+          `${API_URL}/newOrder`,
+
+          {
+            name: uid,
+
+            qty: Number(
+              stockQuantity
+            ),
+
+            price: Number(
+              stockPrice
+            ),
+
+            mode: "BUY",
+          },
+
+          {
+            withCredentials:
+              true,
+          }
+        );
+
+
+        closeBuyWindow();
+
+
+      } catch (error) {
+
+        console.log(
+          "Buy order failed:",
+          error.response
+            ?.data ||
+            error.message
+        );
+
+      }
+    };
+
+
+  const handleCancelClick =
+    () => {
+      closeBuyWindow();
+    };
+
 
   return (
-    <div className="container" id="buy-window" draggable="true">
+    <div
+      className="container"
+      id="buy-window"
+      draggable="true"
+    >
+
       <div className="regular-order">
+
         <div className="inputs">
+
           <fieldset>
-            <legend>Qty.</legend>
+
+            <legend>
+              Qty.
+            </legend>
+
             <input
               type="number"
-              name="qty"
-              id="qty"
-              onChange={(e) => setStockQuantity(e.target.value)}
-              value={stockQuantity}
+              min="1"
+              value={
+                stockQuantity
+              }
+              onChange={(e) =>
+                setStockQuantity(
+                  e.target.value
+                )
+              }
             />
+
           </fieldset>
+
+
           <fieldset>
-            <legend>Price</legend>
+
+            <legend>
+              Price
+            </legend>
+
             <input
               type="number"
-              name="price"
-              id="price"
+              min="0"
               step="0.05"
-              onChange={(e) => setStockPrice(e.target.value)}
-              value={stockPrice}
+              value={
+                stockPrice
+              }
+              onChange={(e) =>
+                setStockPrice(
+                  e.target.value
+                )
+              }
             />
+
           </fieldset>
+
         </div>
+
       </div>
 
+
       <div className="buttons">
-        <span>Margin required ₹140.65</span>
+
+        <span>
+          Buy order for {uid}
+        </span>
+
+
         <div>
-          <Link className="btn btn-blue" onClick={handleBuyClick}>
+
+          <Link
+            className="btn btn-blue"
+            onClick={
+              handleBuyClick
+            }
+          >
             Buy
           </Link>
-          <Link to="" className="btn btn-grey" onClick={handleCancelClick}>
+
+
+          <Link
+            to=""
+            className="btn btn-grey"
+            onClick={
+              handleCancelClick
+            }
+          >
             Cancel
           </Link>
+
         </div>
+
       </div>
+
     </div>
   );
 };
+
 
 export default BuyActionWindow;
