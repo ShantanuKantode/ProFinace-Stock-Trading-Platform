@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 import {
+  Alert,
   Box,
   Button,
   Container,
@@ -8,11 +9,11 @@ import {
   Stack,
   TextField,
   Typography,
-  Alert,
 } from "@mui/material";
 
 import {
   Link,
+  useSearchParams,
 } from "react-router-dom";
 
 import axios from "axios";
@@ -23,18 +24,22 @@ const API_URL =
   "http://localhost:3002";
 
 
-const Signup = () => {
+const Login = () => {
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [searchParams] =
+    useSearchParams();
+
+
+  const [formData, setFormData] =
+    useState({
+      email: "",
+      password: "",
+    });
 
 
   const [error, setError] =
     useState("");
+
 
   const [loading, setLoading] =
     useState(false);
@@ -58,45 +63,20 @@ const Signup = () => {
 
     setError("");
 
-
-    if (
-      formData.password !==
-      formData.confirmPassword
-    ) {
-
-      setError(
-        "Passwords do not match"
-      );
-
-      return;
-    }
-
-
-    if (
-      formData.password.length < 6
-    ) {
-
-      setError(
-        "Password must contain at least 6 characters"
-      );
-
-      return;
-    }
+    setLoading(true);
 
 
     try {
 
-      setLoading(true);
-
-
       const response =
         await axios.post(
-          `${API_URL}/auth/signup`,
+          `${API_URL}/auth/login`,
+
           {
-            name: formData.name,
             email: formData.email,
             password: formData.password,
           },
+
           {
             withCredentials: true,
           }
@@ -104,7 +84,7 @@ const Signup = () => {
 
 
       console.log(
-        "Signup successful:",
+        "Login successful:",
         response.data
       );
 
@@ -115,22 +95,29 @@ const Signup = () => {
         "http://localhost:5174";
 
 
+      const redirect =
+        searchParams.get(
+          "redirect"
+        );
+
+
       window.location.href =
-        dashboardURL;
+        redirect || dashboardURL;
 
 
     } catch (error) {
 
       console.log(
-        "Signup error:",
+        "Login error:",
         error
       );
 
 
       setError(
         error.response?.data?.message ||
-          "Signup failed"
+          "Login failed. Please check your email and password."
       );
+
 
     } finally {
 
@@ -146,11 +133,16 @@ const Signup = () => {
     <Box
       sx={{
         minHeight: "75vh",
+
         display: "flex",
+
         alignItems: "center",
+
         justifyContent: "center",
+
         py: 8,
-        backgroundColor: "#f8f8f5",
+
+        bgcolor: "#f8f8f5",
       }}
     >
 
@@ -159,15 +151,18 @@ const Signup = () => {
         <Paper
           elevation={4}
           sx={{
-            padding: {
+            p: {
               xs: 3,
-              sm: 5,
+              md: 5,
             },
+
             borderRadius: 3,
           }}
         >
 
           <Stack spacing={3}>
+
+            {/* HEADER */}
 
             <Box>
 
@@ -175,22 +170,22 @@ const Signup = () => {
                 variant="h4"
                 fontWeight={800}
               >
-                Create your account
+                Welcome back
               </Typography>
 
 
               <Typography
                 color="text.secondary"
-                sx={{
-                  mt: 1,
-                }}
+                mt={1}
               >
-                Start your investing
-                journey with Pro Finance.
+                Login to access your
+                Pro Finance dashboard.
               </Typography>
 
             </Box>
 
+
+            {/* ERROR */}
 
             {error && (
 
@@ -201,6 +196,8 @@ const Signup = () => {
             )}
 
 
+            {/* LOGIN FORM */}
+
             <Box
               component="form"
               onSubmit={handleSubmit}
@@ -208,80 +205,85 @@ const Signup = () => {
 
               <Stack spacing={2.2}>
 
-                <TextField
-                  label="Full Name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  fullWidth
-                />
-
+                {/* EMAIL */}
 
                 <TextField
                   label="Email"
                   name="email"
                   type="email"
-                  value={formData.email}
-                  onChange={handleChange}
+
+                  value={
+                    formData.email
+                  }
+
+                  onChange={
+                    handleChange
+                  }
+
                   required
+
                   fullWidth
                 />
 
+
+                {/* PASSWORD */}
 
                 <TextField
                   label="Password"
                   name="password"
                   type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  fullWidth
-                />
 
-
-                <TextField
-                  label="Confirm Password"
-                  name="confirmPassword"
-                  type="password"
                   value={
-                    formData.confirmPassword
+                    formData.password
                   }
-                  onChange={handleChange}
+
+                  onChange={
+                    handleChange
+                  }
+
                   required
+
                   fullWidth
                 />
 
+
+                {/* LOGIN BUTTON */}
 
                 <Button
                   type="submit"
+
                   variant="contained"
+
                   disabled={loading}
+
                   fullWidth
+
                   sx={{
-                    backgroundColor:
+                    bgcolor:
                       "#c4ff00",
 
                     color: "#111",
 
-                    paddingY: 1.5,
+                    py: 1.5,
 
                     fontWeight: 700,
 
-                    boxShadow: "none",
+                    boxShadow:
+                      "none",
 
                     "&:hover": {
-                      backgroundColor:
+                      bgcolor:
                         "#b5ee00",
 
-                      boxShadow: "none",
+                      boxShadow:
+                        "none",
                     },
                   }}
                 >
 
                   {loading
-                    ? "Creating account..."
-                    : "Create Account"}
+                    ? "Logging in..."
+                    : "Login"}
 
                 </Button>
 
@@ -290,24 +292,35 @@ const Signup = () => {
             </Box>
 
 
+            {/* SIGNUP LINK */}
+
             <Typography
               textAlign="center"
               color="text.secondary"
             >
 
-              Already have an account?{" "}
+              Don't have an account?{" "}
+
 
               <Box
                 component={Link}
-                to="/login"
+                to="/signup"
+
                 sx={{
                   color: "#111",
+
                   fontWeight: 700,
+
                   textDecoration:
                     "none",
+
+                  "&:hover": {
+                    textDecoration:
+                      "underline",
+                  },
                 }}
               >
-                Login
+                Create account
               </Box>
 
             </Typography>
@@ -321,8 +334,7 @@ const Signup = () => {
     </Box>
 
   );
-
 };
 
 
-export default Signup;
+export default Login;

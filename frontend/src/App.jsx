@@ -11,6 +11,7 @@ import ProductsPage from "./landing_page/products/ProductsPage";
 import PricingPage from "./landing_page/pricing/PricingPage";
 import Signup from "./landing_page/signup/Signup";
 import SupportPage from "./landing_page/support/SupportPage";
+import Login from "./landing_page/login/Login";
 import NotFound from "./NotFound";
 
 const theme = createTheme({
@@ -61,7 +62,9 @@ function App() {
           <Route path="/pricing" element={<PricingPage />} />
 
           <Route path="/signup" element={<Signup />} />
-
+ 
+          <Route path="/login" element={<Login/>} />
+          
           <Route path="/support" element={<SupportPage />} />
 
           <Route path="*" element={<NotFound />} />
