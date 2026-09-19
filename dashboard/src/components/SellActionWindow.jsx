@@ -1,5 +1,6 @@
 import React, {
   useContext,
+  useEffect,
   useState,
 } from "react";
 
@@ -33,17 +34,192 @@ const SellActionWindow = ({
   ] = useState(0);
 
 
+  const [
+    loadingPrice,
+    setLoadingPrice,
+  ] = useState(true);
+
+
+  const [
+    priceError,
+    setPriceError,
+  ] = useState("");
+
+
   const {
     closeSellWindow,
   } = useContext(
     GeneralContext
   );
 
+  const fetchStockPrice = async () => {
+
+    try {
+
+      setLoadingPrice(true);
+
+      setPriceError("");
+
+
+      const response = await axios.get(
+        `${API_URL}/api/stocks/quotes`,
+        {
+          params: {
+            symbols: uid,
+          },
+        }
+      );
+
+
+      console.log(
+        "Sell Window Stock Response:",
+        response.data
+      );
+
+
+      if (
+        !response.data ||
+        !response.data.success
+      ) {
+
+        throw new Error(
+          response.data?.message ||
+          "Failed to fetch stock price"
+        );
+
+      }
+
+
+      const stockData =
+        response.data.data;
+
+
+      let stock = null;
+
+
+      if (
+        Array.isArray(stockData)
+      ) {
+
+        stock =
+          stockData.find(
+            (item) =>
+              item.symbol?.toUpperCase() ===
+              uid?.toUpperCase()
+          );
+
+      }
+
+
+      else if (
+        stockData &&
+        Array.isArray(stockData.data)
+      ) {
+
+        stock =
+          stockData.data.find(
+            (item) =>
+              item.symbol?.toUpperCase() ===
+              uid?.toUpperCase()
+          );
+
+      }
+
+
+      if (!stock) {
+
+        throw new Error(
+          `Price not found for ${uid}`
+        );
+
+      }
+
+
+      const price =
+        Number(stock.close);
+
+
+      if (
+        !Number.isFinite(price) ||
+        price <= 0
+      ) {
+
+        throw new Error(
+          `Invalid price received for ${uid}`
+        );
+
+      }
+
+
+      setStockPrice(price);
+
+
+    } catch (error) {
+
+      console.error(
+        "Sell stock price fetch failed:",
+        error.response?.data ||
+        error.message
+      );
+
+
+      setPriceError(
+        error.response?.data?.message ||
+        error.message ||
+        "Unable to fetch stock price"
+      );
+
+
+    } finally {
+
+      setLoadingPrice(false);
+
+    }
+
+  };
+
+
+  useEffect(() => {
+
+    if (uid) {
+
+      fetchStockPrice();
+
+    }
+
+  }, [uid]);
+
 
   const handleSellClick =
     async () => {
 
       try {
+
+        if (
+          !stockQuantity ||
+          Number(stockQuantity) <= 0
+        ) {
+
+          alert(
+            "Please enter a valid quantity."
+          );
+
+          return;
+
+        }
+
+        if (
+          !stockPrice ||
+          Number(stockPrice) <= 0
+        ) {
+
+          alert(
+            "Stock price is not available."
+          );
+
+          return;
+
+        }
 
         await axios.post(
           `${API_URL}/newOrder`,
@@ -82,17 +258,26 @@ const SellActionWindow = ({
             error.message
         );
 
+
+        alert(
+          error.response?.data?.message ||
+          "Sell order failed"
+        );
+
       }
+
     };
 
 
   const handleCancelClick =
     () => {
+
       closeSellWindow();
+
     };
 
-
   return (
+
     <div
       className="container"
       id="buy-window"
@@ -124,7 +309,6 @@ const SellActionWindow = ({
 
           </fieldset>
 
-
           <fieldset>
 
             <legend>
@@ -138,6 +322,9 @@ const SellActionWindow = ({
               value={
                 stockPrice
               }
+              disabled={
+                loadingPrice
+              }
               onChange={(e) =>
                 setStockPrice(
                   e.target.value
@@ -149,8 +336,56 @@ const SellActionWindow = ({
 
         </div>
 
-      </div>
 
+        {loadingPrice && (
+
+          <p
+            style={{
+              fontSize: "12px",
+              marginTop: "8px",
+            }}
+          >
+
+            Fetching latest available price...
+
+          </p>
+
+        )}
+
+
+        {!loadingPrice &&
+          priceError && (
+
+            <div
+              style={{
+                color: "#e53935",
+                fontSize: "12px",
+                marginTop: "8px",
+              }}
+            >
+
+              {priceError}
+
+
+              <button
+                onClick={
+                  fetchStockPrice
+                }
+                style={{
+                  marginLeft: "10px",
+                  cursor: "pointer",
+                }}
+              >
+
+                Retry
+
+              </button>
+
+            </div>
+
+          )}
+
+      </div>
 
       <div className="buttons">
 
@@ -166,8 +401,26 @@ const SellActionWindow = ({
             onClick={
               handleSellClick
             }
+
+            style={{
+              pointerEvents:
+                loadingPrice ||
+                !!priceError
+                  ? "none"
+                  : "auto",
+
+              opacity:
+                loadingPrice ||
+                !!priceError
+                  ? 0.6
+                  : 1,
+            }}
           >
-            Sell
+
+            {loadingPrice
+              ? "Loading..."
+              : "Sell"}
+
           </Link>
 
 
@@ -178,7 +431,9 @@ const SellActionWindow = ({
               handleCancelClick
             }
           >
+
             Cancel
+
           </Link>
 
         </div>
@@ -186,7 +441,9 @@ const SellActionWindow = ({
       </div>
 
     </div>
+
   );
+
 };
 
 
