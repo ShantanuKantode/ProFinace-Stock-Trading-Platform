@@ -10,16 +10,57 @@ import {
   Search,
 } from "@mui/icons-material";
 
+import DoughnutChart from "./DoughnutChart";
+
 import { watchlist } from "../data/data";
 import GeneralContext from "./GeneralContext";
 
 const WatchList = () => {
-
   const [search, setSearch] = useState("");
 
   const filteredStocks = watchlist.filter((stock) =>
     stock.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const doughnutData = {
+  labels: filteredStocks.map(
+    (stock) => stock.name
+  ),
+
+  datasets: [
+    {
+      label: "Stock Price",
+
+      data: filteredStocks.map(
+        (stock) =>
+          Number(
+            String(stock.price).replace(/,/g, "")
+          ) || 0
+      ),
+
+      backgroundColor: [
+        "#FF6384",
+        "#36A2EB",
+        "#FFCE56",
+        "#4BC0C0",
+        "#9966FF",
+        "#FF9F40",
+        "#66BB6A",
+        "#EC407A",
+        "#26C6DA",
+        "#7E57C2",
+        "#AB47BC",
+        "#42A5F5",
+        "#FFA726",
+        "#26A69A",
+        "#EF5350",
+      ],
+
+      borderColor: "#ffffff",
+      borderWidth: 2,
+    },
+  ],
+};
 
   return (
     <div className="watchlist-container">
@@ -65,19 +106,27 @@ const WatchList = () => {
 
       </ul>
 
+      {filteredStocks.length > 0 && (
+        <div
+          style={{
+            width: "90%",
+            height: "280px",
+            margin: "20px auto",
+            padding: "10px",
+            boxSizing: "border-box",
+          }}
+        >
+          <DoughnutChart data={doughnutData} />
+        </div>
+      )}
+
     </div>
   );
 };
 
 export default WatchList;
 
-
-// -----------------------------
-// WatchList Item
-// -----------------------------
-
 const WatchListItem = ({ stock }) => {
-
   const [showWatchlistActions, setShowWatchlistActions] =
     useState(false);
 
@@ -90,7 +139,6 @@ const WatchListItem = ({ stock }) => {
         setShowWatchlistActions(false)
       }
     >
-
       <div className="item">
 
         <p className={stock.isDown ? "down" : "up"}>
@@ -118,47 +166,34 @@ const WatchListItem = ({ stock }) => {
       </div>
 
       {showWatchlistActions && (
-        <WatchListActions
-          uid={stock.name}
-        />
+        <WatchListActions uid={stock.name} />
       )}
 
     </li>
   );
 };
 
-
-// -----------------------------
-// WatchList Actions
-// -----------------------------
-
 const WatchListActions = ({ uid }) => {
-
   const {
     openBuyWindow,
     openSellWindow,
   } = useContext(GeneralContext);
 
-
   const handleBuy = () => {
     openBuyWindow(uid);
   };
-
 
   const handleSell = () => {
     openSellWindow(uid);
   };
 
-
   const handleAnalytics = () => {
     console.log("Analytics:", uid);
   };
 
-
   const handleMore = () => {
     console.log("More:", uid);
   };
-
 
   return (
     <span className="actions">
@@ -178,7 +213,6 @@ const WatchListActions = ({ uid }) => {
           </button>
         </Tooltip>
 
-
         <Tooltip
           title="Sell (S)"
           placement="top"
@@ -192,7 +226,6 @@ const WatchListActions = ({ uid }) => {
           </button>
         </Tooltip>
 
-
         <Tooltip
           title="Analytics (A)"
           placement="top"
@@ -205,7 +238,6 @@ const WatchListActions = ({ uid }) => {
             <BarChartOutlined className="icon" />
           </button>
         </Tooltip>
-
 
         <Tooltip
           title="More"
