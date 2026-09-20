@@ -51,9 +51,9 @@ const Menu = () => {
     <div className="menu-container">
 
       <img
-        src="/logo.png"
+        src="./public/logo.svg"
         style={{
-          width: "50px",
+          width: "80px",
         }}
         alt="Logo"
       />

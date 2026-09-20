@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
-  // Wait until authentication check is completed
+  
   if (loading) {
     return (
       <div
@@ -19,7 +19,7 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  // If authentication failed
+ 
   if (!user) {
     const frontendURL =
       import.meta.env.VITE_FRONTEND_URL ||
@@ -36,7 +36,7 @@ function ProtectedRoute({ children }) {
     return null;
   }
 
-  // Authentication successful
+  
   return children;
 }
 

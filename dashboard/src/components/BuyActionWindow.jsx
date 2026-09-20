@@ -192,11 +192,6 @@ const BuyActionWindow = ({
 
   }, [uid]);
 
-
-  /* --------------------------------
-     BUY ORDER
-  -------------------------------- */
-
   const handleBuyClick =
     async () => {
 
