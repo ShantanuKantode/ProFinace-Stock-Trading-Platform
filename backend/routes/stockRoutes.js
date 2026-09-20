@@ -9,16 +9,6 @@ const FINNHUB_URL =
   "https://finnhub.io/api/v1/quote";
 
 
-/*
-=========================================
-GET LIVE STOCK PRICE
-Example:
-GET /market/stock/TCS
-GET /market/stock/INFY
-GET /market/stock/RELIANCE
-=========================================
-*/
-
 router.get("/stock/:symbol", async (req, res) => {
   try {
     const symbol =
@@ -30,21 +20,6 @@ router.get("/stock/:symbol", async (req, res) => {
           "FINNHUB_API_KEY is missing in .env",
       });
     }
-
-
-    /*
-      Convert:
-
-      TCS
-      INFY
-      RELIANCE
-
-      into:
-
-      TCS.NS
-      INFY.NS
-      RELIANCE.NS
-    */
 
     const finnhubSymbol =
       symbol.endsWith(".NS")
@@ -76,20 +51,6 @@ router.get("/stock/:symbol", async (req, res) => {
 
     const data =
       await response.json();
-
-
-    /*
-      Finnhub returns:
-
-      c  = current price
-      d  = price change
-      dp = percentage change
-      h  = high
-      l  = low
-      o  = open
-      pc = previous close
-      t  = timestamp
-    */
 
 
     if (

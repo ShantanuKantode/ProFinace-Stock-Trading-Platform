@@ -83,12 +83,6 @@ app.get("/api/stocks/quotes", async (req, res) => {
     }
 
 
-    console.log(
-      "Fetching BharatStock data for:",
-      cleanedSymbols
-    );
-
-
     const response = await axios.get(
       `${BHARATSTOCK_BASE_URL}/v1/stocks/quotes`,
       {
@@ -156,13 +150,6 @@ app.get("/api/indices", async (req, res) => {
       });
     }
 
-
-    console.log(
-      "Fetching BharatStock index data..."
-    );
-
-
-    
 
     const niftyResponse = await axios.get(
       `${BHARATSTOCK_BASE_URL}/v1/indices/NIFTY 50/prices`,
@@ -625,9 +612,7 @@ app.post(
       await newOrder.save();
 
 
-      /* =====================================================
-         BUY
-      ===================================================== */
+      
 
       if (mode === "BUY") {
 

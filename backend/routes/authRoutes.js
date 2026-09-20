@@ -16,24 +16,14 @@ const { UserModel } = require("../model/UserModel");
 
 const router = express.Router();
 
-
-// SIGNUP
 router.post("/signup", signup);
 
-
-// LOGIN
 router.post("/login", login);
 
-
-// LOGOUT
 router.post("/logout", logout);
 
-
-// CURRENT USER
 router.get("/me", authenticateToken, getCurrentUser);
 
-
-// ADMIN TEST ROUTE
 router.get(
   "/admin",
   authenticateToken,
