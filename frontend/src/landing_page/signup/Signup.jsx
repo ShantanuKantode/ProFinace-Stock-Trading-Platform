@@ -23,22 +23,33 @@ const API_URL =
   "http://localhost:3002";
 
 
+const DASHBOARD_URL =
+  import.meta.env.VITE_DASHBOARD_URL ||
+  "http://localhost:5174";
+
+
 const Signup = () => {
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [formData, setFormData] =
+    useState({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
 
 
   const [error, setError] =
     useState("");
 
+
   const [loading, setLoading] =
     useState(false);
 
+
+  // =====================================================
+  // Handle Input
+  // =====================================================
 
   const handleChange = (event) => {
 
@@ -51,6 +62,10 @@ const Signup = () => {
 
   };
 
+
+  // =====================================================
+  // Signup
+  // =====================================================
 
   const handleSubmit = async (event) => {
 
@@ -84,22 +99,36 @@ const Signup = () => {
     }
 
 
+    setLoading(true);
+
+
     try {
 
-      setLoading(true);
+      console.log(
+        "Signup request started..."
+      );
 
 
       const response =
         await axios.post(
+
           `${API_URL}/auth/signup`,
+
           {
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
+            name:
+              formData.name.trim(),
+
+            email:
+              formData.email.trim(),
+
+            password:
+              formData.password,
           },
+
           {
             withCredentials: true,
           }
+
         );
 
 
@@ -109,19 +138,21 @@ const Signup = () => {
       );
 
 
-      const dashboardURL =
-        import.meta.env
-          .VITE_DASHBOARD_URL ||
-        "http://localhost:5174";
+      console.log(
+        "Redirecting to dashboard:",
+        DASHBOARD_URL
+      );
 
 
-      window.location.href =
-        dashboardURL;
+      // IMPORTANT
+      window.location.replace(
+        DASHBOARD_URL
+      );
 
 
     } catch (error) {
 
-      console.log(
+      console.error(
         "Signup error:",
         error
       );
@@ -129,15 +160,15 @@ const Signup = () => {
 
       setError(
         error.response?.data?.message ||
-          "Signup failed"
+        "Signup failed"
       );
+
 
     } finally {
 
       setLoading(false);
 
     }
-
   };
 
 
@@ -146,10 +177,15 @@ const Signup = () => {
     <Box
       sx={{
         minHeight: "75vh",
+
         display: "flex",
+
         alignItems: "center",
+
         justifyContent: "center",
+
         py: 8,
+
         backgroundColor: "#f8f8f5",
       }}
     >
@@ -158,11 +194,13 @@ const Signup = () => {
 
         <Paper
           elevation={4}
+
           sx={{
             padding: {
               xs: 3,
               sm: 5,
             },
+
             borderRadius: 3,
           }}
         >
@@ -181,6 +219,7 @@ const Signup = () => {
 
               <Typography
                 color="text.secondary"
+
                 sx={{
                   mt: 1,
                 }}
@@ -258,6 +297,7 @@ const Signup = () => {
                   variant="contained"
                   disabled={loading}
                   fullWidth
+
                   sx={{
                     backgroundColor:
                       "#c4ff00",
@@ -300,11 +340,13 @@ const Signup = () => {
               <Box
                 component={Link}
                 to="/login"
+
                 sx={{
                   color: "#111",
+
                   fontWeight: 700,
-                  textDecoration:
-                    "none",
+
+                  textDecoration: "none",
                 }}
               >
                 Login
@@ -321,7 +363,6 @@ const Signup = () => {
     </Box>
 
   );
-
 };
 
 

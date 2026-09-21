@@ -11,7 +11,6 @@ const { PositionsModel } = require("./model/PositionsModel");
 const { OrdersModel } = require("./model/OrdersModel");
 
 const authRoutes = require("./routes/authRoutes");
-
 const { authenticateToken } = require("./middleware/authMiddleware");
 
 const PORT = process.env.PORT || 3002;
@@ -20,6 +19,9 @@ const uri = process.env.MONGO_URI;
 
 const app = express();
 
+/* =========================================================
+   BHARATSTOCK API
+========================================================= */
 
 const BHARATSTOCK_BASE_URL = "https://bharatstockapi.com";
 
@@ -27,30 +29,95 @@ const bharatStockHeaders = {
   "X-API-Key": process.env.BHARATSTOCK_API_KEY,
 };
 
+/* =========================================================
+   CORS CONFIGURATION
+========================================================= */
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.DASHBOARD_URL,
+
+  // Local development
+  "http://localhost:5173",
+  "http://localhost:5174",
+].filter(Boolean);
+
+console.log("Allowed CORS Origins:");
+console.log(allowedOrigins);
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-    ],
+    origin: function (origin, callback) {
+      // Allow requests without an origin
+      // Example: Postman, server-to-server requests
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("CORS blocked origin:", origin);
+
+      return callback(
+        new Error(`CORS blocked for origin: ${origin}`)
+      );
+    },
 
     credentials: true,
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
   })
 );
 
+/* =========================================================
+   MIDDLEWARE
+========================================================= */
+
 app.use(express.json());
+
+app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
 
+/* =========================================================
+   HEALTH CHECK
+========================================================= */
+
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "ProFinance Backend API is running",
+    environment: process.env.NODE_ENV || "development",
+  });
+});
+
+/* =========================================================
+   AUTH ROUTES
+========================================================= */
 
 app.use("/auth", authRoutes);
 
+/* =========================================================
+   STOCK QUOTES
+========================================================= */
 
 app.get("/api/stocks/quotes", async (req, res) => {
   try {
     const { symbols } = req.query;
-
 
     if (!symbols) {
       return res.status(400).json({
@@ -59,7 +126,6 @@ app.get("/api/stocks/quotes", async (req, res) => {
       });
     }
 
-
     if (!process.env.BHARATSTOCK_API_KEY) {
       return res.status(500).json({
         success: false,
@@ -67,13 +133,11 @@ app.get("/api/stocks/quotes", async (req, res) => {
       });
     }
 
-
     const cleanedSymbols = symbols
       .split(",")
       .map((symbol) => symbol.trim().toUpperCase())
       .filter(Boolean)
       .join(",");
-
 
     if (!cleanedSymbols) {
       return res.status(400).json({
@@ -81,7 +145,6 @@ app.get("/api/stocks/quotes", async (req, res) => {
         message: "Valid stock symbols are required",
       });
     }
-
 
     const response = await axios.get(
       `${BHARATSTOCK_BASE_URL}/v1/stocks/quotes`,
@@ -96,14 +159,11 @@ app.get("/api/stocks/quotes", async (req, res) => {
       }
     );
 
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: response.data,
     });
-
   } catch (error) {
-
     console.error(
       "BharatStock Error:",
       error.response?.data || error.message
@@ -121,14 +181,12 @@ app.get("/api/stocks/quotes", async (req, res) => {
       });
     }
 
-
     if (error.code === "ECONNABORTED") {
       return res.status(504).json({
         success: false,
         message: "BharatStock API request timed out",
       });
     }
-
 
     return res.status(500).json({
       success: false,
@@ -138,18 +196,22 @@ app.get("/api/stocks/quotes", async (req, res) => {
   }
 });
 
-
+/* =========================================================
+   NIFTY 50 + NIFTY BANK
+========================================================= */
 
 app.get("/api/indices", async (req, res) => {
   try {
-
-     if (!process.env.BHARATSTOCK_API_KEY) {
+    if (!process.env.BHARATSTOCK_API_KEY) {
       return res.status(500).json({
         success: false,
         message: "BharatStock API key is missing",
       });
     }
 
+    /* -----------------------------
+       NIFTY 50
+    ----------------------------- */
 
     const niftyResponse = await axios.get(
       `${BHARATSTOCK_BASE_URL}/v1/indices/NIFTY 50/prices`,
@@ -165,6 +227,10 @@ app.get("/api/indices", async (req, res) => {
       }
     );
 
+    /* -----------------------------
+       NIFTY BANK
+    ----------------------------- */
+
     const bankResponse = await axios.get(
       `${BHARATSTOCK_BASE_URL}/v1/indices/NIFTY BANK/prices`,
       {
@@ -179,13 +245,11 @@ app.get("/api/indices", async (req, res) => {
       }
     );
 
-
     const niftyData =
       niftyResponse.data?.data || [];
 
     const bankData =
       bankResponse.data?.data || [];
-
 
     if (!niftyData.length) {
       return res.status(404).json({
@@ -194,7 +258,6 @@ app.get("/api/indices", async (req, res) => {
       });
     }
 
-
     if (!bankData.length) {
       return res.status(404).json({
         success: false,
@@ -202,22 +265,20 @@ app.get("/api/indices", async (req, res) => {
       });
     }
 
-
-
     const niftyLatest = niftyData[0];
-
     const niftyPrevious = niftyData[1];
 
     const bankLatest = bankData[0];
-
     const bankPrevious = bankData[1];
 
+    /* -----------------------------
+       Calculate Change
+    ----------------------------- */
 
     const calculateChange = (
       latest,
       previous
     ) => {
-
       if (
         !latest?.close ||
         !previous?.close
@@ -228,15 +289,13 @@ app.get("/api/indices", async (req, res) => {
         };
       }
 
-
       const change =
         Number(latest.close) -
         Number(previous.close);
 
-
       const changePercent =
-        (change / Number(previous.close)) * 100;
-
+        (change / Number(previous.close)) *
+        100;
 
       return {
         change,
@@ -250,29 +309,21 @@ app.get("/api/indices", async (req, res) => {
         niftyPrevious
       );
 
-
-    /* -----------------------------
-       NIFTY BANK CHANGE
-    ----------------------------- */
-
     const bankChange =
       calculateChange(
         bankLatest,
         bankPrevious
       );
 
+    /* -----------------------------
+       Response
+    ----------------------------- */
 
-   
-
-    res.status(200).json({
-
+    return res.status(200).json({
       success: true,
 
       data: {
-
-
         nifty50: {
-
           name: "NIFTY 50",
 
           value:
@@ -288,9 +339,7 @@ app.get("/api/indices", async (req, res) => {
             niftyLatest.trade_date,
         },
 
-
         niftyBank: {
-
           name: "NIFTY BANK",
 
           value:
@@ -307,23 +356,17 @@ app.get("/api/indices", async (req, res) => {
         },
       },
     });
-
   } catch (error) {
-
     console.error(
       "BharatStock Index Error:",
       error.response?.data ||
-      error.message
+        error.message
     );
 
-
-   
     if (error.response) {
-
       return res.status(
         error.response.status
       ).json({
-
         success: false,
 
         message:
@@ -335,15 +378,10 @@ app.get("/api/indices", async (req, res) => {
       });
     }
 
-
-   
-
     if (
       error.code === "ECONNABORTED"
     ) {
-
       return res.status(504).json({
-
         success: false,
 
         message:
@@ -351,10 +389,7 @@ app.get("/api/indices", async (req, res) => {
       });
     }
 
-
-   
     return res.status(500).json({
-
       success: false,
 
       message:
@@ -366,35 +401,32 @@ app.get("/api/indices", async (req, res) => {
   }
 });
 
-
+/* =========================================================
+   ALL HOLDINGS
+========================================================= */
 
 app.get(
   "/allHoldings",
   authenticateToken,
   async (req, res) => {
-
     try {
-
       const allHoldings =
         await HoldingsModel.find({
           userId: req.user._id,
-        }).sort({ name: 1 });
+        }).sort({
+          name: 1,
+        });
 
-
-      res.status(200).json(
+      return res.status(200).json(
         allHoldings
       );
-
     } catch (error) {
-
       console.log(
         "Holdings error:",
         error
       );
 
-
-      res.status(500).json({
-
+      return res.status(500).json({
         message:
           "Failed to fetch holdings",
       });
@@ -402,35 +434,32 @@ app.get(
   }
 );
 
-
+/* =========================================================
+   ALL POSITIONS
+========================================================= */
 
 app.get(
   "/allPositions",
   authenticateToken,
   async (req, res) => {
-
     try {
-
       const allPositions =
         await PositionsModel.find({
           userId: req.user._id,
-        }).sort({ name: 1 });
+        }).sort({
+          name: 1,
+        });
 
-
-      res.status(200).json(
+      return res.status(200).json(
         allPositions
       );
-
     } catch (error) {
-
       console.log(
         "Positions error:",
         error
       );
 
-
-      res.status(500).json({
-
+      return res.status(500).json({
         message:
           "Failed to fetch positions",
       });
@@ -438,15 +467,15 @@ app.get(
   }
 );
 
-
+/* =========================================================
+   ALL ORDERS
+========================================================= */
 
 app.get(
   "/allOrders",
   authenticateToken,
   async (req, res) => {
-
     try {
-
       const allOrders =
         await OrdersModel.find({
           userId: req.user._id,
@@ -454,21 +483,16 @@ app.get(
           createdAt: -1,
         });
 
-
-      res.status(200).json(
+      return res.status(200).json(
         allOrders
       );
-
     } catch (error) {
-
       console.log(
         "Orders error:",
         error
       );
 
-
-      res.status(500).json({
-
+      return res.status(500).json({
         message:
           "Failed to fetch orders",
       });
@@ -476,15 +500,15 @@ app.get(
   }
 );
 
-
+/* =========================================================
+   CREATE BUY / SELL ORDER
+========================================================= */
 
 app.post(
   "/newOrder",
   authenticateToken,
   async (req, res) => {
-
     try {
-
       const {
         name,
         qty,
@@ -492,70 +516,57 @@ app.post(
         mode,
       } = req.body;
 
+      const quantity = Number(qty);
 
-      const quantity =
-        Number(qty);
+      const orderPrice = Number(price);
 
-
-      const orderPrice =
-        Number(price);
-
-
+      /* -----------------------------
+         Validation
+      ----------------------------- */
 
       if (!name || !mode) {
-
         return res.status(400).json({
-
           message:
             "Stock name and order mode are required",
         });
       }
 
-
       if (
         !["BUY", "SELL"].includes(mode)
       ) {
-
         return res.status(400).json({
-
           message:
             "Invalid order mode",
         });
       }
 
-
       if (
         !Number.isFinite(quantity) ||
         quantity <= 0
       ) {
-
         return res.status(400).json({
-
           message:
             "Quantity must be greater than zero",
         });
       }
 
-
       if (
         !Number.isFinite(orderPrice) ||
         orderPrice < 0
       ) {
-
         return res.status(400).json({
-
           message:
             "Invalid stock price",
         });
       }
 
-
+      /* -----------------------------
+         SELL Validation
+      ----------------------------- */
 
       if (mode === "SELL") {
-
         const existingHolding =
           await HoldingsModel.findOne({
-
             userId:
               req.user._id,
 
@@ -563,35 +574,30 @@ app.post(
               name,
           });
 
-
         if (!existingHolding) {
-
           return res.status(400).json({
-
             message:
               "You don't own this stock!",
           });
         }
 
-
         if (
           existingHolding.qty <
           quantity
         ) {
-
           return res.status(400).json({
-
             message:
               "Insufficient stock quantity!",
           });
         }
       }
 
+      /* -----------------------------
+         Create Order
+      ----------------------------- */
 
-      
       const newOrder =
         new OrdersModel({
-
           userId:
             req.user._id,
 
@@ -608,17 +614,15 @@ app.post(
             mode,
         });
 
-
       await newOrder.save();
 
-
-      
+      /* -----------------------------
+         BUY
+      ----------------------------- */
 
       if (mode === "BUY") {
-
         const existingHolding =
           await HoldingsModel.findOne({
-
             userId:
               req.user._id,
 
@@ -626,13 +630,10 @@ app.post(
               name,
           });
 
-
         if (existingHolding) {
-
           const totalQty =
             existingHolding.qty +
             quantity;
-
 
           const totalInvestment =
             existingHolding.avg *
@@ -640,27 +641,20 @@ app.post(
             orderPrice *
               quantity;
 
-
           existingHolding.qty =
             totalQty;
-
 
           existingHolding.avg =
             totalInvestment /
             totalQty;
 
-
           existingHolding.price =
             orderPrice;
 
-
           await existingHolding.save();
-
         } else {
-
           const newHolding =
             new HoldingsModel({
-
               userId:
                 req.user._id,
 
@@ -686,19 +680,17 @@ app.post(
                 false,
             });
 
-
           await newHolding.save();
         }
       }
 
-
-     
+      /* -----------------------------
+         SELL
+      ----------------------------- */
 
       if (mode === "SELL") {
-
         const existingHolding =
           await HoldingsModel.findOne({
-
             userId:
               req.user._id,
 
@@ -706,41 +698,33 @@ app.post(
               name,
           });
 
-
         existingHolding.qty -=
           quantity;
-
 
         existingHolding.price =
           orderPrice;
 
-
         if (
           existingHolding.qty === 0
         ) {
-
           await HoldingsModel.deleteOne({
-
             _id:
               existingHolding._id,
           });
-
         } else {
-
           await existingHolding.save();
         }
       }
 
+      /* -----------------------------
+         Response
+      ----------------------------- */
 
-     
-
-      res.status(201).json({
-
+      return res.status(201).json({
         message:
           "Order saved successfully",
 
         order: {
-
           id:
             newOrder._id,
 
@@ -757,17 +741,13 @@ app.post(
             newOrder.mode,
         },
       });
-
     } catch (error) {
-
       console.log(
         "New order error:",
         error
       );
 
-
-      res.status(500).json({
-
+      return res.status(500).json({
         message:
           "Error saving order",
       });
@@ -775,12 +755,61 @@ app.post(
   }
 );
 
+/* =========================================================
+   404 HANDLER
+========================================================= */
 
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.method} ${req.originalUrl} not found`,
+  });
+});
 
+/* =========================================================
+   ERROR HANDLER
+========================================================= */
+
+app.use(
+  (error, req, res, next) => {
+    console.error(
+      "Server Error:",
+      error.message
+    );
+
+    if (
+      error.message?.startsWith(
+        "CORS blocked"
+      )
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "CORS blocked this request",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Internal server error",
+    });
+  }
+);
+
+/* =========================================================
+   START SERVER
+========================================================= */
 
 const startServer = async () => {
-
   try {
+    if (!uri) {
+      console.error(
+        "MONGO_URI is missing from environment variables."
+      );
+
+      process.exit(1);
+    }
 
     await mongoose.connect(uri);
 
@@ -788,28 +817,22 @@ const startServer = async () => {
       "Database Connected"
     );
 
-
     app.listen(
       PORT,
       () => {
-
         console.log(
           `App started on port ${PORT}`
         );
       }
     );
-
   } catch (error) {
-
     console.error(
       "Database connection failed:",
       error
     );
 
-
     process.exit(1);
   }
 };
-
 
 startServer();

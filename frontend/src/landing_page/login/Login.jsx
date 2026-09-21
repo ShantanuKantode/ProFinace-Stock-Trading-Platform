@@ -13,7 +13,6 @@ import {
 
 import {
   Link,
-  useSearchParams,
 } from "react-router-dom";
 
 import axios from "axios";
@@ -24,11 +23,12 @@ const API_URL =
   "http://localhost:3002";
 
 
+const DASHBOARD_URL =
+  import.meta.env.VITE_DASHBOARD_URL ||
+  "http://localhost:5174";
+
+
 const Login = () => {
-
-  const [searchParams] =
-    useSearchParams();
-
 
   const [formData, setFormData] =
     useState({
@@ -45,6 +45,10 @@ const Login = () => {
     useState(false);
 
 
+  // =====================================================
+  // Handle Input
+  // =====================================================
+
   const handleChange = (event) => {
 
     setFormData({
@@ -57,6 +61,10 @@ const Login = () => {
   };
 
 
+  // =====================================================
+  // Login
+  // =====================================================
+
   const handleSubmit = async (event) => {
 
     event.preventDefault();
@@ -68,18 +76,28 @@ const Login = () => {
 
     try {
 
+      console.log(
+        "Login request started..."
+      );
+
+
       const response =
         await axios.post(
+
           `${API_URL}/auth/login`,
 
           {
-            email: formData.email,
-            password: formData.password,
+            email:
+              formData.email.trim(),
+
+            password:
+              formData.password,
           },
 
           {
             withCredentials: true,
           }
+
         );
 
 
@@ -89,25 +107,22 @@ const Login = () => {
       );
 
 
-      const dashboardURL =
-        import.meta.env
-          .VITE_DASHBOARD_URL ||
-        "http://localhost:5174";
+      console.log(
+        "Redirecting to dashboard:",
+        DASHBOARD_URL
+      );
 
 
-      const redirect =
-        searchParams.get(
-          "redirect"
-        );
-
-
-      window.location.href =
-        redirect || dashboardURL;
+      // IMPORTANT
+      // Move to the separate dashboard application
+      window.location.replace(
+        DASHBOARD_URL
+      );
 
 
     } catch (error) {
 
-      console.log(
+      console.error(
         "Login error:",
         error
       );
@@ -115,7 +130,7 @@ const Login = () => {
 
       setError(
         error.response?.data?.message ||
-          "Login failed. Please check your email and password."
+        "Login failed. Please check your email and password."
       );
 
 
@@ -124,7 +139,6 @@ const Login = () => {
       setLoading(false);
 
     }
-
   };
 
 
@@ -150,6 +164,7 @@ const Login = () => {
 
         <Paper
           elevation={4}
+
           sx={{
             p: {
               xs: 3,
@@ -161,8 +176,6 @@ const Login = () => {
         >
 
           <Stack spacing={3}>
-
-            {/* HEADER */}
 
             <Box>
 
@@ -185,8 +198,6 @@ const Login = () => {
             </Box>
 
 
-            {/* ERROR */}
-
             {error && (
 
               <Alert severity="error">
@@ -196,8 +207,6 @@ const Login = () => {
             )}
 
 
-            {/* LOGIN FORM */}
-
             <Box
               component="form"
               onSubmit={handleSubmit}
@@ -205,62 +214,36 @@ const Login = () => {
 
               <Stack spacing={2.2}>
 
-                {/* EMAIL */}
-
                 <TextField
                   label="Email"
                   name="email"
                   type="email"
-
-                  value={
-                    formData.email
-                  }
-
-                  onChange={
-                    handleChange
-                  }
-
+                  value={formData.email}
+                  onChange={handleChange}
                   required
-
                   fullWidth
                 />
 
-
-                {/* PASSWORD */}
 
                 <TextField
                   label="Password"
                   name="password"
                   type="password"
-
-                  value={
-                    formData.password
-                  }
-
-                  onChange={
-                    handleChange
-                  }
-
+                  value={formData.password}
+                  onChange={handleChange}
                   required
-
                   fullWidth
                 />
 
 
-                {/* LOGIN BUTTON */}
-
                 <Button
                   type="submit"
-
                   variant="contained"
-
                   disabled={loading}
-
                   fullWidth
 
                   sx={{
-                    bgcolor:
-                      "#c4ff00",
+                    bgcolor: "#c4ff00",
 
                     color: "#111",
 
@@ -268,15 +251,12 @@ const Login = () => {
 
                     fontWeight: 700,
 
-                    boxShadow:
-                      "none",
+                    boxShadow: "none",
 
                     "&:hover": {
-                      bgcolor:
-                        "#b5ee00",
+                      bgcolor: "#b5ee00",
 
-                      boxShadow:
-                        "none",
+                      boxShadow: "none",
                     },
                   }}
                 >
@@ -292,15 +272,12 @@ const Login = () => {
             </Box>
 
 
-            {/* SIGNUP LINK */}
-
             <Typography
               textAlign="center"
               color="text.secondary"
             >
 
               Don't have an account?{" "}
-
 
               <Box
                 component={Link}
@@ -311,8 +288,7 @@ const Login = () => {
 
                   fontWeight: 700,
 
-                  textDecoration:
-                    "none",
+                  textDecoration: "none",
 
                   "&:hover": {
                     textDecoration:
