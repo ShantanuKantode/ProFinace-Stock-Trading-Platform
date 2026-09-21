@@ -19,9 +19,7 @@ const uri = process.env.MONGO_URI;
 
 const app = express();
 
-/* =========================================================
-   BHARATSTOCK API
-========================================================= */
+
 
 const BHARATSTOCK_BASE_URL = "https://bharatstockapi.com";
 
@@ -29,9 +27,7 @@ const bharatStockHeaders = {
   "X-API-Key": process.env.BHARATSTOCK_API_KEY,
 };
 
-/* =========================================================
-   CORS CONFIGURATION
-========================================================= */
+
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -93,9 +89,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
 
-/* =========================================================
-   HEALTH CHECK
-========================================================= */
+
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -105,15 +99,11 @@ app.get("/", (req, res) => {
   });
 });
 
-/* =========================================================
-   AUTH ROUTES
-========================================================= */
+
 
 app.use("/auth", authRoutes);
 
-/* =========================================================
-   STOCK QUOTES
-========================================================= */
+
 
 app.get("/api/stocks/quotes", async (req, res) => {
   try {
@@ -196,9 +186,6 @@ app.get("/api/stocks/quotes", async (req, res) => {
   }
 });
 
-/* =========================================================
-   NIFTY 50 + NIFTY BANK
-========================================================= */
 
 app.get("/api/indices", async (req, res) => {
   try {
@@ -209,9 +196,7 @@ app.get("/api/indices", async (req, res) => {
       });
     }
 
-    /* -----------------------------
-       NIFTY 50
-    ----------------------------- */
+   
 
     const niftyResponse = await axios.get(
       `${BHARATSTOCK_BASE_URL}/v1/indices/NIFTY 50/prices`,
@@ -227,9 +212,7 @@ app.get("/api/indices", async (req, res) => {
       }
     );
 
-    /* -----------------------------
-       NIFTY BANK
-    ----------------------------- */
+
 
     const bankResponse = await axios.get(
       `${BHARATSTOCK_BASE_URL}/v1/indices/NIFTY BANK/prices`,
@@ -271,9 +254,7 @@ app.get("/api/indices", async (req, res) => {
     const bankLatest = bankData[0];
     const bankPrevious = bankData[1];
 
-    /* -----------------------------
-       Calculate Change
-    ----------------------------- */
+   
 
     const calculateChange = (
       latest,
@@ -315,9 +296,7 @@ app.get("/api/indices", async (req, res) => {
         bankPrevious
       );
 
-    /* -----------------------------
-       Response
-    ----------------------------- */
+   
 
     return res.status(200).json({
       success: true,
@@ -401,9 +380,7 @@ app.get("/api/indices", async (req, res) => {
   }
 });
 
-/* =========================================================
-   ALL HOLDINGS
-========================================================= */
+
 
 app.get(
   "/allHoldings",
@@ -434,9 +411,7 @@ app.get(
   }
 );
 
-/* =========================================================
-   ALL POSITIONS
-========================================================= */
+
 
 app.get(
   "/allPositions",
@@ -467,9 +442,7 @@ app.get(
   }
 );
 
-/* =========================================================
-   ALL ORDERS
-========================================================= */
+
 
 app.get(
   "/allOrders",
@@ -500,9 +473,6 @@ app.get(
   }
 );
 
-/* =========================================================
-   CREATE BUY / SELL ORDER
-========================================================= */
 
 app.post(
   "/newOrder",
@@ -520,9 +490,7 @@ app.post(
 
       const orderPrice = Number(price);
 
-      /* -----------------------------
-         Validation
-      ----------------------------- */
+     
 
       if (!name || !mode) {
         return res.status(400).json({
@@ -560,9 +528,7 @@ app.post(
         });
       }
 
-      /* -----------------------------
-         SELL Validation
-      ----------------------------- */
+      
 
       if (mode === "SELL") {
         const existingHolding =
@@ -592,9 +558,7 @@ app.post(
         }
       }
 
-      /* -----------------------------
-         Create Order
-      ----------------------------- */
+      
 
       const newOrder =
         new OrdersModel({
@@ -616,9 +580,7 @@ app.post(
 
       await newOrder.save();
 
-      /* -----------------------------
-         BUY
-      ----------------------------- */
+    
 
       if (mode === "BUY") {
         const existingHolding =
@@ -684,10 +646,7 @@ app.post(
         }
       }
 
-      /* -----------------------------
-         SELL
-      ----------------------------- */
-
+    
       if (mode === "SELL") {
         const existingHolding =
           await HoldingsModel.findOne({
@@ -716,9 +675,7 @@ app.post(
         }
       }
 
-      /* -----------------------------
-         Response
-      ----------------------------- */
+     
 
       return res.status(201).json({
         message:
@@ -755,9 +712,7 @@ app.post(
   }
 );
 
-/* =========================================================
-   404 HANDLER
-========================================================= */
+
 
 app.use((req, res) => {
   res.status(404).json({
@@ -766,9 +721,7 @@ app.use((req, res) => {
   });
 });
 
-/* =========================================================
-   ERROR HANDLER
-========================================================= */
+
 
 app.use(
   (error, req, res, next) => {
@@ -797,9 +750,7 @@ app.use(
   }
 );
 
-/* =========================================================
-   START SERVER
-========================================================= */
+
 
 const startServer = async () => {
   try {
