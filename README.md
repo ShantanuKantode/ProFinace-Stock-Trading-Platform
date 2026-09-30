@@ -1,6 +1,6 @@
 # 📈 ProFinance – Stock Trading Platform
 
-ProFinance is a full-stack stock trading platform built using the MERN stack. It provides an interactive dashboard for viewing Indian stock market data, managing simulated buy/sell orders, tracking holdings and positions, and monitoring portfolio information.
+ProFinance is a Full-stack stock trading platform built using the MERN stack. It provides an interactive dashboard for viewing Indian stock market data, managing simulated buy/sell orders, tracking holdings and positions, and monitoring portfolio information.
 
 The application includes secure user authentication, protected APIs, MongoDB-based data storage, stock market API integration, and a responsive React dashboard.
 
