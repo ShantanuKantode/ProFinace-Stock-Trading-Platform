@@ -4,6 +4,10 @@ ProFinance is a Full-stack stock trading platform built using the MERN stack. It
 
 The application includes secure user authentication, protected APIs, MongoDB-based data storage, stock market API integration, and a responsive React dashboard.
 
+##Live Link
+https://profinance-frontend.onrender.com
+
+
 ## ✨ Features
 
 * 🔐 User Signup/Login with JWT Authentication
